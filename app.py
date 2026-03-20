@@ -61,9 +61,21 @@ def classify_model(model_str: str) -> str:
     return "sonnet"
 
 
-def estimate_energy_joules(input_tokens: int, output_tokens: int, model_tier: str) -> float:
+CACHE_READ_DISCOUNT = 0.1  # Cache reads cost ~10% of fresh input (matches Anthropic pricing ratio)
+
+
+def estimate_energy_joules(
+    input_tokens: int,
+    output_tokens: int,
+    model_tier: str,
+    cache_read_tokens: int = 0,
+) -> float:
     rates = JOULES_PER_TOKEN.get(model_tier, JOULES_PER_TOKEN["sonnet"])
-    gpu_joules = input_tokens * rates["input"] + output_tokens * rates["output"]
+    gpu_joules = (
+        input_tokens * rates["input"]
+        + output_tokens * rates["output"]
+        + cache_read_tokens * rates["input"] * CACHE_READ_DISCOUNT
+    )
     return gpu_joules * INFRA_MULTIPLIER
 
 
@@ -168,11 +180,16 @@ def _parse_single_session(jsonl_path: Path) -> dict | None:
         weight = count / total_model_msgs
         tier_input = input_tokens * weight
         tier_output = output_tokens * weight
-        energy_j += estimate_energy_joules(int(tier_input), int(tier_output), tier)
+        tier_cache = cache_read_tokens * weight
+        energy_j += estimate_energy_joules(
+            int(tier_input), int(tier_output), tier, cache_read_tokens=int(tier_cache)
+        )
 
     # Fallback: if no model detected, use sonnet
     if not model_counts:
-        energy_j = estimate_energy_joules(input_tokens, output_tokens, "sonnet")
+        energy_j = estimate_energy_joules(
+            input_tokens, output_tokens, "sonnet", cache_read_tokens=cache_read_tokens
+        )
 
     # Dominant model for display
     dominant_model = max(model_counts, key=model_counts.get) if model_counts else "sonnet"
@@ -543,6 +560,14 @@ This dashboard aggregates across all messages in all sessions.</p>
 <p><strong>Cross-check:</strong> Epoch AI (Feb 2025) estimated ~1,080 J per ChatGPT query. Your avg assistant message is ~194 output tokens,
 implying ~5.6 J/output-token at full infrastructure cost. The rates above yield ~1.08 J/output-token (Sonnet, with 2x multiplier) —
 lower because they're derived from compute benchmarks, not metered datacenter power. True energy is likely between these bounds.</p>
+
+<p><strong>Cross-check (Google, Aug 2025):</strong> Google disclosed median Gemini text prompt = 0.24 Wh, 0.26 mL water.
+This is the only first-party per-query energy disclosure from a major AI company. It implies ~1.08 mL/Wh water usage efficiency,
+lower than the 1.7 mL/Wh midpoint used here.</p>
+
+<p><strong>Cache read handling:</strong> Cache read tokens are counted at 10% of fresh input energy cost, matching
+Anthropic's pricing ratio for cached vs. uncached input. Claude Code sessions are heavily cache-dependent,
+so this materially affects totals.</p>
 
 <p><strong>Model detection:</strong> Each session's model is detected from the <code>model</code> field in assistant messages.
 Energy is weighted proportionally if multiple models are used within one session (e.g., Haiku subagents within a Sonnet session).</p>
