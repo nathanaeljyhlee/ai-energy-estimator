@@ -4,7 +4,7 @@ Estimate the energy and water footprint of your Claude Code usage.
 
 ## Screenshot
 
-![Dashboard](screenshot.png)
+!127.0.0.1_7861_ (1).png
 
 ## How it works
 
