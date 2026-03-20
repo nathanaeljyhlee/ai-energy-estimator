@@ -26,9 +26,13 @@ Rates are in Wh per million tokens (GPU compute only), then multiplied by 2x for
 | Sonnet| 30              | 150              | 0.108           | 0.540            |
 | Haiku | 10              | 50               | 0.036           | 0.180            |
 
+**Cache reads:** Counted at 10% of fresh input energy cost, matching Anthropic's pricing ratio. Claude Code sessions are heavily cache-dependent, so this materially affects totals.
+
 **Infrastructure multiplier:** 2x GPU energy, per MIT Technology Review (2025): "doubling the GPU energy gives an approximate estimate of the entire operation's energy demands."
 
 **Water:** 1.7 mL/Wh (Li et al. 2023, UC Riverside — midpoint of 1.3–2.0 mL/Wh range for data center cooling + power generation).
+
+**Cross-check (Google, Aug 2025):** Google disclosed median Gemini text prompt = 0.24 Wh, 0.26 mL water — the only first-party per-query energy disclosure from a major AI company. This implies ~1.08 mL/Wh water usage efficiency, lower than the 1.7 mL/Wh midpoint used here.
 
 ## Quickstart
 
@@ -54,6 +58,9 @@ The dashboard opens at `http://127.0.0.1:7861` in your browser.
 
 5. **Patterson et al. (2021)** — Carbon and the Cloud (arXiv:2104.10350)
    https://arxiv.org/abs/2104.10350
+
+6. **Google (2025/08/21)** — First-party Gemini per-query energy disclosure
+   https://www.technologyreview.com/2025/08/21/1122288/google-gemini-ai-energy/
 
 ## Disclaimer
 
