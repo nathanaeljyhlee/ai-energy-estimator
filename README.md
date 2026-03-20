@@ -4,7 +4,7 @@ Estimate the energy and water footprint of your Claude Code usage.
 
 ## Screenshot
 
-![AI Energy Estimator dashboard](<screenshot.png>)
+![AI Energy Estimator dashboard](<screenshot2.png>)
 
 ## How it works
 
